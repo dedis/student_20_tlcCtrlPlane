@@ -231,7 +231,10 @@ func unicastNodeResponseMessage(memberNode *network.ServerIdentity, s *Service, 
 }
 
 func (s *Service) JoinRequest(req *template.JoinRequest) (*template.JoinResponse, error) {
+
+	fmt.Printf("Enter_Time of %s is %s \n", s.ServerIdentity(), time.Now())
 	s.stepLock.Lock()
+
 	nodeJoinRequest := &template.NodeJoinRequest{Id: s.ServerIdentity()}
 
 	s.receivedNodeJoinResponse = make([]*template.NodeJoinResponse, 0)
@@ -244,7 +247,7 @@ func (s *Service) JoinRequest(req *template.JoinRequest) (*template.JoinResponse
 }
 
 func (s *Service) InitRequest(req *template.InitRequest) (*template.InitResponse, error) {
-
+	fmt.Printf("Enter_Time of %s is %s \n", s.ServerIdentity(), time.Now())
 	defer s.stepLock.Unlock()
 	s.stepLock.Lock()
 	s.lastEpchStartTime = time.Now()
@@ -299,14 +302,11 @@ func (s *Service) SetGenesisSet(req *template.GenesisNodesRequest) (*template.Ge
 	for i := len(s.admissionCommittee); i < s.maxNodeCount; i++ {
 		s.vectorClockMemberList[i] = ""
 	}
-
-	//fmt.Printf("%s set the genesis set \n", s.name)
-
 	return &template.GenesisNodesResponse{}, nil
 }
 
 func (s *Service) SetActive(req *template.ActiveStatusRequest) (*template.ActiveStatusResponse, error) {
-
+	fmt.Printf("Leave_Time of %s is %s \n", s.ServerIdentity(), time.Now())
 	defer s.stepLock.Unlock()
 	s.stepLock.Lock()
 
@@ -675,14 +675,13 @@ func handleWitnessedMessage(s *Service, req *template.WitnessedMessage) {
 
 				s.step = s.step + 1
 				stepNow = s.step
-				//fmt.Printf("%s increased time step to %d \n", s.ServerIdentity(), stepNow)
 
 				var unwitnessedMessage *template.UnwitnessedMessage
 				if stepNow == 1 {
 					s.majority = len(s.admissionCommittee)/2 + 1
 					// start membership consensus
 					randomNumber := rand.Intn(s.maxNodeCount * 10000)
-					fmt.Printf("%s started the membership consensus process with initial random number is %d \n", s.ServerIdentity(), randomNumber)
+
 					s.tempNewCommittee = append(s.admissionCommittee, s.newNodes...)
 					s.newNodes = make([]*network.ServerIdentity, 0)
 					nodes := s.tempNewCommittee
@@ -751,8 +750,6 @@ func handleWitnessedMessage(s *Service, req *template.WitnessedMessage) {
 							s.tempPingConsensus = pingMatrixStr
 							randomNumber := rand.Intn(10000)
 
-							fmt.Printf("%s's initial ping proposal random number is %d \n", s.ServerIdentity(), randomNumber)
-
 							unwitnessedMessage = &template.UnwitnessedMessage{Step: s.step,
 								Id:                   s.ServerIdentity(),
 								SentArray:            convertInt2DtoString1D(s.sent, s.maxNodeCount, s.maxNodeCount),
@@ -796,7 +793,6 @@ func handleWitnessedMessage(s *Service, req *template.WitnessedMessage) {
 								}
 								if numSeenConsensus > 0 {
 									// someone has seen the consensus, so let's move on
-									//fmt.Printf("The nodes reach the node consenses in %d number of rounds\n", s.maxConsensusRounds-s.sentUnwitnessMessages[stepNow-1].ConsensusRoundNumber)
 									for _, twm := range s.recievedThresholdwitnessedMessages[stepNow-2] {
 										if twm.FoundConsensus == true {
 											s.admissionCommittee = make([]*network.ServerIdentity, 0)
@@ -804,7 +800,6 @@ func handleWitnessedMessage(s *Service, req *template.WitnessedMessage) {
 												index, _ := strconv.Atoi(twm.NodesProposal[u])
 												s.admissionCommittee = append(s.admissionCommittee, s.rosterNodes[index])
 											}
-											fmt.Printf("Node %s reached early nodes consenses with %s and updated the roster \n", s.name, s.admissionCommittee)
 											break
 										}
 									}
@@ -887,8 +882,9 @@ func handleWitnessedMessage(s *Service, req *template.WitnessedMessage) {
 							consensusValue := make([]string, 0)
 							celebrityMessages := s.recievedThresholdStepWitnessedMessages[stepNow-2]
 							randomNumber := -1
+							randomNumber = randomNumber + 1
 							properConsensus := false
-
+							properConsensus = properConsensus
 							CelibrityNodes := make([]string, 0)
 							for i := 0; i < len(celebrityMessages); i++ {
 								CelibrityNodes = append(CelibrityNodes, celebrityMessages[i].Nodes...) //possible duplicates
@@ -954,14 +950,13 @@ func handleWitnessedMessage(s *Service, req *template.WitnessedMessage) {
 							}
 
 							if consensusFound {
-								fmt.Printf("Found consensus with random number %d and the consensus property is %s with length %d \n", randomNumber, properConsensus, len(consensusValue))
 								s.tempNewCommittee = make([]*network.ServerIdentity, 0)
 								for u := 0; u < len(consensusValue); u++ {
 									index, _ := strconv.Atoi(consensusValue[u])
 									s.tempNewCommittee = append(s.tempNewCommittee, s.rosterNodes[index])
 								}
 							} else {
-								//fmt.Printf("Did not find consensus\n")
+
 							}
 
 							if s.sentUnwitnessMessages[stepNow-1].ConsensusRoundNumber > 1 {
@@ -982,8 +977,6 @@ func handleWitnessedMessage(s *Service, req *template.WitnessedMessage) {
 
 								}
 								randomNumber := rand.Intn(s.maxNodeCount * 10000)
-
-								//fmt.Printf("%s's new proposal random number is %d \n", s.ServerIdentity(), randomNumber)
 
 								unwitnessedMessage = &template.UnwitnessedMessage{Step: stepNow,
 									Id:                   s.ServerIdentity(),
@@ -1098,8 +1091,6 @@ func handleWitnessedMessage(s *Service, req *template.WitnessedMessage) {
 										if twm.FoundConsensus == true {
 											s.pingConsensus = convertString1DtoInt2D(twm.PingMetrix, len(s.admissionCommittee), len(s.admissionCommittee))
 
-											fmt.Printf("%s early end of ping matrix consensus with ping matrix %s in %d consensus rounds \n", s.name, s.pingConsensus, s.maxConsensusRounds-s.sentUnwitnessMessages[stepNow-1].ConsensusRoundNumber)
-
 											unwitnessedMessage = &template.UnwitnessedMessage{Step: stepNow,
 												Id:          s.ServerIdentity(),
 												SentArray:   convertInt2DtoString1D(s.sent, s.maxNodeCount, s.maxNodeCount),
@@ -1133,7 +1124,9 @@ func handleWitnessedMessage(s *Service, req *template.WitnessedMessage) {
 							consensusValue := make([]string, 0)
 							celebrityMessages := s.recievedThresholdStepWitnessedMessages[stepNow-2]
 							randomNumber := -1
+							randomNumber = randomNumber
 							properConsensus := false
+							properConsensus = properConsensus
 
 							CelibrityNodes := make([]string, 0)
 							for i := 0; i < len(celebrityMessages); i++ {
@@ -1199,10 +1192,9 @@ func handleWitnessedMessage(s *Service, req *template.WitnessedMessage) {
 							}
 
 							if consensusFound {
-								fmt.Printf("Found consensus with random number %d and the consensus property is %s \n", randomNumber, properConsensus)
 								s.tempPingConsensus = consensusValue
 							} else {
-								//fmt.Printf("Did not find consensus\n")
+
 							}
 
 							if s.sentUnwitnessMessages[stepNow-1].ConsensusRoundNumber > 1 {
@@ -1215,8 +1207,6 @@ func handleWitnessedMessage(s *Service, req *template.WitnessedMessage) {
 									strPingMtrx = s.tempPingConsensus
 								}
 								randomNumber := rand.Intn(10000)
-
-								fmt.Printf("%s's new proposal random number is %d \n", s.ServerIdentity(), randomNumber)
 
 								unwitnessedMessage = &template.UnwitnessedMessage{Step: stepNow,
 									Id:                   s.ServerIdentity(),
@@ -1235,8 +1225,6 @@ func handleWitnessedMessage(s *Service, req *template.WitnessedMessage) {
 
 									s.pingConsensus = convertString1DtoInt2D(s.tempPingConsensus, len(s.admissionCommittee), len(s.admissionCommittee))
 
-									fmt.Printf("%s end of ping matrix consensus with ping matrix %s", s.name, s.pingConsensus)
-
 									unwitnessedMessage = &template.UnwitnessedMessage{Step: stepNow,
 										Id:          s.ServerIdentity(),
 										SentArray:   convertInt2DtoString1D(s.sent, s.maxNodeCount, s.maxNodeCount),
@@ -1252,14 +1240,15 @@ func handleWitnessedMessage(s *Service, req *template.WitnessedMessage) {
 
 				if unwitnessedMessage.Messagetype == 0 {
 					// end of control plane
-					fmt.Printf("Time is %s and the number of nodes is %d\n", time.Since(s.startTime), len(s.admissionCommittee))
+					fmt.Printf("Epoch_Completion_Time for %s is %s \n", s.ServerIdentity(), time.Now())
 					for len(s.newNodes) == 0 || time.Since(s.lastEpchStartTime) < 10 {
 						time.Sleep(1 * time.Millisecond)
 					}
 					s.lastEpchStartTime = time.Now()
+					fmt.Printf("Epoch_Start_Time for %s is %s \n", s.ServerIdentity(), time.Now())
 					// analogous to one CRUX round
 					randomNumber := rand.Intn(s.maxNodeCount * 10000)
-					fmt.Printf("%s started the membership consensus process with initial random number is %d \n", s.ServerIdentity(), randomNumber)
+
 					s.tempNewCommittee = append(s.admissionCommittee, s.newNodes...)
 					s.newNodes = make([]*network.ServerIdentity, 0)
 					nodes := s.tempNewCommittee
@@ -1286,13 +1275,13 @@ func handleWitnessedMessage(s *Service, req *template.WitnessedMessage) {
 				if stepNow > s.maxTime {
 					return
 				}
-				value, ok := s.sentUnwitnessMessages[stepNow]
+				_, ok := s.sentUnwitnessMessages[stepNow]
 
 				if !ok {
 					broadcastUnwitnessedMessage(s.admissionCommittee, s, unwitnessedMessage)
 					s.sentUnwitnessMessages[stepNow] = unwitnessedMessage
 				} else {
-					fmt.Printf("Unwitnessed message %s for step %d from %s is already sent; possible race condition \n", value, stepNow, s.ServerIdentity())
+
 				}
 
 				unAckedUnwitnessedMessages := s.recievedTempUnwitnessedMessages[stepNow]
@@ -1328,6 +1317,7 @@ func handleJoinResponseMessage(s *Service, req *template.NodeJoinResponse) {
 			s.receivedEnoughNodeResponses = true
 			newNodeJoinConfirmation := &template.NodeJoinConfirmation{Id: s.ServerIdentity()}
 			broadcastNodeJoinConfirmationMessage(s.admissionCommittee, s, newNodeJoinConfirmation)
+			fmt.Printf("Registration_Completion_Time of %s is %s \n", s.ServerIdentity(), time.Now())
 		}
 	}
 }
@@ -1341,7 +1331,7 @@ func handleJoinAdmissionCommittee(s *Service, req *template.JoinAdmissionCommitt
 	if !s.receivedAdmissionCommitteeJoin {
 		s.lastEpchStartTime = time.Now()
 		s.receivedAdmissionCommitteeJoin = true
-		fmt.Printf("%s joined the admission committee at step %d \n", s.ServerIdentity(), req.Step)
+		fmt.Printf("Committee_Join_Time of %s is %s \n", s.ServerIdentity(), time.Now())
 		s.step = req.Step
 		s.admissionCommittee = make([]*network.ServerIdentity, 0)
 		for t := 0; t < len(req.NewCommitee); t++ {
@@ -1415,7 +1405,7 @@ func newService(c *onet.Context) (onet.Service, error) {
 
 		maxConsensusRounds: 128,
 
-		multiCastRounds: 10,
+		multiCastRounds: 1,
 
 		sentUnwitnessMessages:     make(map[int]*template.UnwitnessedMessage),
 		sentUnwitnessMessagesLock: new(sync.Mutex),

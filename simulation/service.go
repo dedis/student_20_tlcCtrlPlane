@@ -63,6 +63,9 @@ func (s *SimulationService) Node(config *onet.SimulationConfig) error {
 
 func (s *SimulationService) Simulation1(config *onet.SimulationConfig) error {
 	numGenesis := 5
+	nextNode := numGenesis
+	arrivaleRate := 8
+
 	nodes := make([]string, numGenesis)
 	clients := make([]*template.Client, len(config.Roster.List))
 
@@ -81,86 +84,25 @@ func (s *SimulationService) Simulation1(config *onet.SimulationConfig) error {
 	for i := 0; i < len(config.Roster.List); i++ {
 		_, _ = clients[i].SetGenesisSignersRequest(config.Roster.List[i], nodes)
 	}
-	fmt.Printf("Started Genesis CRUX, Round 0 \n")
 
 	for i := 0; i < numGenesis; i++ {
 		_, _ = clients[i].SendInitRequest(config.Roster.List[i])
 	}
 
-	time.Sleep(15 * time.Second)
+	for k := 0; k < 10; k++ {
 
-	fmt.Printf("Started Round 1 \n")
+		time.Sleep(time.Duration(arrivaleRate) * time.Second)
 
-	for i := 5; i < 7; i++ {
-		_, _ = clients[i].SendJoinRequest(config.Roster.List[i])
+		clients[nextNode].SendJoinRequest(config.Roster.List[nextNode])
+
+		nodes = append(nodes, strconv.Itoa(nextNode))
+
+		for i := nextNode; i < len(config.Roster.List); i++ {
+			_, _ = clients[i].SetGenesisSignersRequest(config.Roster.List[i], nodes)
+		}
+
+		nextNode = nextNode + 1
 	}
-
-	time.Sleep(15 * time.Second)
-
-	for i := 5; i < 7; i++ {
-		nodes = append(nodes, strconv.Itoa(i))
-	}
-
-	for i := 7; i < len(config.Roster.List); i++ {
-		_, _ = clients[i].SetGenesisSignersRequest(config.Roster.List[i], nodes)
-	}
-
-	fmt.Printf("Started Round 2 \n")
-	for i := 7; i < 9; i++ {
-		_, _ = clients[i].SendJoinRequest(config.Roster.List[i])
-	}
-	time.Sleep(15 * time.Second)
-
-	for i := 7; i < 9; i++ {
-		nodes = append(nodes, strconv.Itoa(i))
-	}
-
-	for i := 9; i < len(config.Roster.List); i++ {
-		_, _ = clients[i].SetGenesisSignersRequest(config.Roster.List[i], nodes)
-	}
-
-	fmt.Printf("Started Round 3 \n")
-	for i := 9; i < 11; i++ {
-		_, _ = clients[i].SendJoinRequest(config.Roster.List[i])
-	}
-	time.Sleep(15 * time.Second)
-
-	for i := 9; i < 11; i++ {
-		nodes = append(nodes, strconv.Itoa(i))
-	}
-
-	for i := 11; i < len(config.Roster.List); i++ {
-		_, _ = clients[i].SetGenesisSignersRequest(config.Roster.List[i], nodes)
-	}
-
-	fmt.Printf("Started Round 4 \n")
-	for i := 11; i < 13; i++ {
-		_, _ = clients[i].SendJoinRequest(config.Roster.List[i])
-	}
-	time.Sleep(15 * time.Second)
-
-	for i := 11; i < 13; i++ {
-		nodes = append(nodes, strconv.Itoa(i))
-	}
-
-	for i := 13; i < len(config.Roster.List); i++ {
-		_, _ = clients[i].SetGenesisSignersRequest(config.Roster.List[i], nodes)
-	}
-
-	fmt.Printf("Started Round 5 \n")
-	for i := 13; i < 15; i++ {
-		_, _ = clients[i].SendJoinRequest(config.Roster.List[i])
-	}
-	time.Sleep(15 * time.Second)
-
-	for i := 13; i < 15; i++ {
-		nodes = append(nodes, strconv.Itoa(i))
-	}
-
-	for i := 15; i < len(config.Roster.List); i++ {
-		_, _ = clients[i].SetGenesisSignersRequest(config.Roster.List[i], nodes)
-	}
-
 	time.Sleep(100 * time.Second)
 
 	fmt.Printf("End of simulations\n")
