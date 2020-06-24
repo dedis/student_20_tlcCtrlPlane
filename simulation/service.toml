@@ -1,6 +1,6 @@
 Simulation = "TemplateService"
 Servers = 20
-Bf = 20
+Bf = 22
 Rounds = 10
 CloseWait = 6000
 Suite = "Ed25519"

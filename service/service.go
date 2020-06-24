@@ -46,6 +46,8 @@ type Service struct {
 	startTime         time.Time
 	lastEpchStartTime time.Time
 
+	globalStartTime time.Time
+
 	maxConsensusRounds int
 
 	multiCastRounds int
@@ -232,7 +234,7 @@ func unicastNodeResponseMessage(memberNode *network.ServerIdentity, s *Service, 
 
 func (s *Service) JoinRequest(req *template.JoinRequest) (*template.JoinResponse, error) {
 
-	fmt.Printf("Enter_Time of %s is %s \n", s.ServerIdentity(), time.Now())
+	fmt.Printf("Enter_Time of %s is %s \n", s.ServerIdentity(), time.Since(s.globalStartTime))
 	s.stepLock.Lock()
 
 	nodeJoinRequest := &template.NodeJoinRequest{Id: s.ServerIdentity()}
@@ -247,7 +249,7 @@ func (s *Service) JoinRequest(req *template.JoinRequest) (*template.JoinResponse
 }
 
 func (s *Service) InitRequest(req *template.InitRequest) (*template.InitResponse, error) {
-	fmt.Printf("Enter_Time of %s is %s \n", s.ServerIdentity(), time.Now())
+	fmt.Printf("Enter_Time of %s is %s \n", s.ServerIdentity(), time.Since(s.globalStartTime))
 	defer s.stepLock.Unlock()
 	s.stepLock.Lock()
 	s.lastEpchStartTime = time.Now()
@@ -306,7 +308,7 @@ func (s *Service) SetGenesisSet(req *template.GenesisNodesRequest) (*template.Ge
 }
 
 func (s *Service) SetActive(req *template.ActiveStatusRequest) (*template.ActiveStatusResponse, error) {
-	fmt.Printf("Leave_Time of %s is %s \n", s.ServerIdentity(), time.Now())
+	fmt.Printf("Leave_Time of %s is %s \n", s.ServerIdentity(), time.Since(s.globalStartTime))
 	defer s.stepLock.Unlock()
 	s.stepLock.Lock()
 
@@ -341,6 +343,10 @@ func (s *Service) SetRoster(req *template.RosterNodesRequest) (*template.RosterN
 	//	s.nodeDelays[i][5] = 100
 	//	s.nodeDelays[i][6] = 100
 	//	s.nodeDelays[i][7] = 100
+	//	s.nodeDelays[i][8] = 100
+	//	s.nodeDelays[i][9] = 100
+	//	s.nodeDelays[i][10] = 100
+	//	s.nodeDelays[i][11] = 100
 	//}
 
 	return &template.RosterNodesResponse{}, nil
@@ -1240,12 +1246,12 @@ func handleWitnessedMessage(s *Service, req *template.WitnessedMessage) {
 
 				if unwitnessedMessage.Messagetype == 0 {
 					// end of control plane
-					fmt.Printf("Epoch_Completion_Time for %s is %s \n", s.ServerIdentity(), time.Now())
+					fmt.Printf("Epoch_Completion_Time for %s is %s \n", s.ServerIdentity(), time.Since(s.globalStartTime))
 					for len(s.newNodes) == 0 || time.Since(s.lastEpchStartTime) < 10 {
 						time.Sleep(1 * time.Millisecond)
 					}
 					s.lastEpchStartTime = time.Now()
-					fmt.Printf("Epoch_Start_Time for %s is %s \n", s.ServerIdentity(), time.Now())
+					fmt.Printf("Epoch_Start_Time for %s is %s \n", s.ServerIdentity(), time.Since(s.globalStartTime))
 					// analogous to one CRUX round
 					randomNumber := rand.Intn(s.maxNodeCount * 10000)
 
@@ -1317,7 +1323,7 @@ func handleJoinResponseMessage(s *Service, req *template.NodeJoinResponse) {
 			s.receivedEnoughNodeResponses = true
 			newNodeJoinConfirmation := &template.NodeJoinConfirmation{Id: s.ServerIdentity()}
 			broadcastNodeJoinConfirmationMessage(s.admissionCommittee, s, newNodeJoinConfirmation)
-			fmt.Printf("Registration_Completion_Time of %s is %s \n", s.ServerIdentity(), time.Now())
+			fmt.Printf("Registration_Completion_Time of %s is %s \n", s.ServerIdentity(), time.Since(s.globalStartTime))
 		}
 	}
 }
@@ -1331,7 +1337,7 @@ func handleJoinAdmissionCommittee(s *Service, req *template.JoinAdmissionCommitt
 	if !s.receivedAdmissionCommitteeJoin {
 		s.lastEpchStartTime = time.Now()
 		s.receivedAdmissionCommitteeJoin = true
-		fmt.Printf("Committee_Join_Time of %s is %s \n", s.ServerIdentity(), time.Now())
+		fmt.Printf("Committee_Join_Time of %s is %s \n", s.ServerIdentity(), time.Since(s.globalStartTime))
 		s.step = req.Step
 		s.admissionCommittee = make([]*network.ServerIdentity, 0)
 		for t := 0; t < len(req.NewCommitee); t++ {
@@ -1457,6 +1463,8 @@ func newService(c *onet.Context) (onet.Service, error) {
 		tempNewCommittee: nil,
 
 		receivedAdmissionCommitteeJoin: false,
+
+		globalStartTime: time.Now(),
 	}
 	if err := s.RegisterHandlers(s.SetGenesisSet, s.InitRequest, s.JoinRequest, s.SetRoster, s.SetActive); err != nil {
 		return nil, errors.New("couldn't register messages")

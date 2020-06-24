@@ -166,7 +166,7 @@ func (s *SimulationService) Simulation2(config *onet.SimulationConfig) error {
 }
 
 func (s *SimulationService) Simulation3(config *onet.SimulationConfig) error {
-	numGenesis := 15
+	numGenesis := 5
 	nodes := make([]string, numGenesis)
 	clients := make([]*template.Client, len(config.Roster.List))
 
@@ -185,21 +185,20 @@ func (s *SimulationService) Simulation3(config *onet.SimulationConfig) error {
 	for i := 0; i < len(config.Roster.List); i++ {
 		_, _ = clients[i].SetGenesisSignersRequest(config.Roster.List[i], nodes)
 	}
-	fmt.Printf("Started Genesis CRUX, Round 0 \n")
 
 	for i := 0; i < numGenesis; i++ {
 		_, _ = clients[i].SendInitRequest(config.Roster.List[i])
 	}
 
-	time.Sleep(20 * time.Second)
+	time.Sleep(15 * time.Second)
 
 	fmt.Printf("End of simulations\n")
 	return nil
 }
 
 // Run is used on the destination machines and runs a number of
-// rounds
+//
 func (s *SimulationService) Run(config *onet.SimulationConfig) error {
-	s.Simulation1(config)
+	s.Simulation3(config)
 	return nil
 }
