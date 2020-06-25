@@ -250,6 +250,8 @@ func (s *Service) JoinRequest(req *template.JoinRequest) (*template.JoinResponse
 
 func (s *Service) InitRequest(req *template.InitRequest) (*template.InitResponse, error) {
 	fmt.Printf("Enter_Time of %s is %s \n", s.ServerIdentity(), time.Since(s.globalStartTime))
+	fmt.Printf("Registration_Completion_Time of %s is %s \n", s.ServerIdentity(), time.Since(s.globalStartTime))
+	fmt.Printf("Committee_Join_Time of %s is %s \n", s.ServerIdentity(), time.Since(s.globalStartTime))
 	defer s.stepLock.Unlock()
 	s.stepLock.Lock()
 	s.lastEpchStartTime = time.Now()
@@ -686,6 +688,7 @@ func handleWitnessedMessage(s *Service, req *template.WitnessedMessage) {
 				if stepNow == 1 {
 					s.majority = len(s.admissionCommittee)/2 + 1
 					// start membership consensus
+					fmt.Printf("Epoch_Start_Time for %s is %s \n", s.ServerIdentity(), time.Since(s.globalStartTime))
 					randomNumber := rand.Intn(s.maxNodeCount * 10000)
 
 					s.tempNewCommittee = append(s.admissionCommittee, s.newNodes...)
@@ -1338,6 +1341,7 @@ func handleJoinAdmissionCommittee(s *Service, req *template.JoinAdmissionCommitt
 		s.lastEpchStartTime = time.Now()
 		s.receivedAdmissionCommitteeJoin = true
 		fmt.Printf("Committee_Join_Time of %s is %s \n", s.ServerIdentity(), time.Since(s.globalStartTime))
+		fmt.Printf("Epoch_Start_Time for %s is %s \n", s.ServerIdentity(), time.Since(s.globalStartTime))
 		s.step = req.Step
 		s.admissionCommittee = make([]*network.ServerIdentity, 0)
 		for t := 0; t < len(req.NewCommitee); t++ {

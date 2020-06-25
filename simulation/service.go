@@ -64,7 +64,6 @@ func (s *SimulationService) Node(config *onet.SimulationConfig) error {
 func (s *SimulationService) Simulation1(config *onet.SimulationConfig) error {
 	numGenesis := 5
 	nextNode := numGenesis
-	arrivaleRate := 8
 
 	nodes := make([]string, numGenesis)
 	clients := make([]*template.Client, len(config.Roster.List))
@@ -88,10 +87,20 @@ func (s *SimulationService) Simulation1(config *onet.SimulationConfig) error {
 	for i := 0; i < numGenesis; i++ {
 		_, _ = clients[i].SendInitRequest(config.Roster.List[i])
 	}
-
+	var arrivalTimes [10]int
+	arrivalTimes[0] = 2
+	arrivalTimes[1] = 2
+	arrivalTimes[2] = 4
+	arrivalTimes[3] = 6
+	arrivalTimes[4] = 8
+	arrivalTimes[5] = 8
+	arrivalTimes[6] = 1
+	arrivalTimes[7] = 1
+	arrivalTimes[8] = 3
+	arrivalTimes[9] = 10
 	for k := 0; k < 10; k++ {
 
-		time.Sleep(time.Duration(arrivaleRate) * time.Second)
+		time.Sleep(time.Duration(arrivalTimes[k]) * time.Second)
 
 		clients[nextNode].SendJoinRequest(config.Roster.List[nextNode])
 
@@ -103,7 +112,7 @@ func (s *SimulationService) Simulation1(config *onet.SimulationConfig) error {
 
 		nextNode = nextNode + 1
 	}
-	time.Sleep(100 * time.Second)
+	time.Sleep(50 * time.Second)
 
 	fmt.Printf("End of simulations\n")
 	return nil
@@ -129,39 +138,15 @@ func (s *SimulationService) Simulation2(config *onet.SimulationConfig) error {
 	for i := 0; i < len(config.Roster.List); i++ {
 		_, _ = clients[i].SetGenesisSignersRequest(config.Roster.List[i], nodes)
 	}
-	fmt.Printf("Started Genesis CRUX, Round 0 \n")
 
 	for i := 0; i < numGenesis; i++ {
 		_, _ = clients[i].SendInitRequest(config.Roster.List[i])
 	}
-
-	time.Sleep(15 * time.Second)
-
-	fmt.Printf("Started Round 1 \n")
-
-	for i := 0; i < 2; i++ {
+	for i := 0; i < 7; i++ {
+		time.Sleep(10 * time.Second)
 		_, _ = clients[i].SendActiveRequest(config.Roster.List[i])
 	}
-
-	time.Sleep(15 * time.Second)
-
-	fmt.Printf("Started Round 2 \n")
-
-	for i := 2; i < 4; i++ {
-		_, _ = clients[i].SendActiveRequest(config.Roster.List[i])
-	}
-
-	time.Sleep(15 * time.Second)
-
-	fmt.Printf("Started Round 3 \n")
-
-	for i := 4; i < 6; i++ {
-		_, _ = clients[i].SendActiveRequest(config.Roster.List[i])
-	}
-
 	time.Sleep(100 * time.Second)
-
-	fmt.Printf("End of simulations\n")
 	return nil
 }
 
@@ -199,6 +184,6 @@ func (s *SimulationService) Simulation3(config *onet.SimulationConfig) error {
 // Run is used on the destination machines and runs a number of
 //
 func (s *SimulationService) Run(config *onet.SimulationConfig) error {
-	s.Simulation3(config)
+	s.Simulation2(config)
 	return nil
 }
